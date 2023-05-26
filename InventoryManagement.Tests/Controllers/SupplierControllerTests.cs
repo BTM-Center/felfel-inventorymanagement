@@ -1,6 +1,8 @@
 using InventoryManagement.App.Controllers;
 using InventoryManagement.Core.Dtos;
+using InventoryManagement.Core.Dtos.WrapperDtos;
 using InventoryManagement.Core.Managers.Interfaces;
+using InventoryManagement.Tests.Builders.Supplier;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
 using Xunit;
@@ -13,8 +15,14 @@ namespace InventoryManagement.Tests.Controllers
         public async Task GetOrderAsync_Returns200Ok_WithTheCorrectDto()
         {
             //Arrange
+            var testOrderDto = OrderDtoBuilder.Create()
+                .WithId(1)
+                .WithSupplier(1)
+                .WithCreatedDateTime(DateTime.Now)
+                .Build();
+
             var supplierManager = new Mock<ISupplierManager>();
-            supplierManager.Setup(m => m.GetOrderAsync(It.IsAny<int>())).Returns(GetTestOrderDto());
+            supplierManager.Setup(m => m.GetOrderAsync(It.IsAny<int>())).Returns(Task.FromResult(testOrderDto));
 
             var supplierController = new SupplierController(supplierManager.Object);
 
@@ -34,7 +42,7 @@ namespace InventoryManagement.Tests.Controllers
         {
             //Arrange
             var supplierManager = new Mock<ISupplierManager>();
-            supplierManager.Setup(m => m.GetOrderAsync(It.IsAny<int>())).Returns(GetNoResultDto());
+            supplierManager.Setup(m => m.GetOrderAsync(It.IsAny<int>())).Returns(Task.FromResult((OrderDto?)null));
 
             var supplierController = new SupplierController(supplierManager.Object);
 
@@ -46,29 +54,25 @@ namespace InventoryManagement.Tests.Controllers
             Assert.NotNull(notFoundResult);
         }
 
-        private Task<OrderDto> GetTestOrderDto()
+        [Fact]
+        public async Task CreateOrderAsync_Returns200Ok()
         {
-            return Task.Run(() =>
-            {
-                return new OrderDto()
-                {
-                    Id = 1,
-                    Supplier = new SupplierDto
-                    {
-                        Id = 2
-                    },
-                    CreatedDateTime = DateTime.MinValue,
-                    OrderLines = new List<OrderLineDto>()
-                };
-            });
-        }
+            //Arrange
+            var testCreateOrderDto = CreateOrderDtoBuilder.Create()
+                .WithSupplier(1)
+                .Build();
 
-        private Task<OrderDto?> GetNoResultDto()
-        {
-            return Task.Run(() =>
-            {
-                return (OrderDto?)null;
-            });
+            var supplierManager = new Mock<ISupplierManager>();
+            supplierManager.Setup(m => m.CreateOrderAsync(It.IsAny<CreateOrderDto>())).Returns(Task.FromResult(1));
+
+            var supplierController = new SupplierController(supplierManager.Object);
+
+            //Act
+            var result = await supplierController.CreateOrderAsync(testCreateOrderDto);
+            var createdResult = result as CreatedResult;
+
+            //Assert
+            Assert.NotNull(createdResult);
         }
     }
 }

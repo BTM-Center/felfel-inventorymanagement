@@ -2,8 +2,10 @@
 using InventoryManagement.Core.Dtos;
 using InventoryManagement.Core.Dtos.WrapperDtos;
 using InventoryManagement.Core.Managers.Interfaces;
+using InventoryManagement.Tests.Builders.Product;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Shared.Enums;
 using Xunit;
 
 namespace InventoryManagement.Tests.Controllers
@@ -14,8 +16,14 @@ namespace InventoryManagement.Tests.Controllers
         public async Task GetProductBatchAsync_Returns200Ok_WithTheCorrectDto()
         {
             //Arrange
+            var testProductBatchDto = ProductBatchDtoBuilder.Create()
+                .WithId(1)
+                .WithProduct(1)
+                .WithUnits(100)
+                .Build();
+
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetProductBatchAsync(It.IsAny<int>())).Returns(GetTestProductBatchDto());
+            productManager.Setup(m => m.GetProductBatchAsync(It.IsAny<int>())).Returns(Task.FromResult(testProductBatchDto));
 
             var productController = new ProductController(productManager.Object);
 
@@ -35,7 +43,7 @@ namespace InventoryManagement.Tests.Controllers
         {
             //Arrange
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetProductBatchAsync(It.IsAny<int>())).Returns(GetNoProductBatchResultDto());
+            productManager.Setup(m => m.GetProductBatchAsync(It.IsAny<int>())).Returns(Task.FromResult((ProductBatchDto?)null));
 
             var productController = new ProductController(productManager.Object);
 
@@ -51,8 +59,19 @@ namespace InventoryManagement.Tests.Controllers
         public async Task GetBatchesForProductAsync_Returns200Ok_WithTheCorrectDto()
         {
             //Arrange
+            var testProductBatchDto = ProductBatchDtoBuilder.Create()
+                .WithId(1)
+                .WithProduct(1)
+                .WithUnits(100)
+                .Build();
+
+            IList<ProductBatchDto> testProductBatchesDto = new List<ProductBatchDto>()
+            {
+                testProductBatchDto
+            };
+
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetBatchesForProductAsync(It.IsAny<int>())).Returns(GetTestProductBatchesDto());
+            productManager.Setup(m => m.GetBatchesForProductAsync(It.IsAny<int>())).Returns(Task.FromResult(testProductBatchesDto));
 
             var productController = new ProductController(productManager.Object);
 
@@ -72,7 +91,7 @@ namespace InventoryManagement.Tests.Controllers
         {
             //Arrange
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetBatchesForProductAsync(It.IsAny<int>())).Returns(GetNoProductBatchesResultDto());
+            productManager.Setup(m => m.GetBatchesForProductAsync(It.IsAny<int>())).Returns(Task.FromResult((IList<ProductBatchDto>?)null));
 
             var productController = new ProductController(productManager.Object);
 
@@ -88,8 +107,18 @@ namespace InventoryManagement.Tests.Controllers
         public async Task GetAvailableProductBatchesWithFreshnessStatusAsync_Returns200Ok_WithTheCorrectDto()
         {
             //Arrange
+            var productBatchWithFreshnessStatus = ProductBatchWithFreshnessStatusDtoBuilder.Create()
+                .WithProductBatch(1)
+                .WithFreshnessStatus(ProductBatchFreshnessStatus.Fresh)
+                .Build();
+
+            IList<ProductBatchWithFreshnessStatusDto> productBatchesWithFreshnessStatus = new List<ProductBatchWithFreshnessStatusDto>()
+            {
+                productBatchWithFreshnessStatus
+            };
+
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetAvailableProductBatchesWithFreshnessStatusAsync()).Returns(GetTestProductBatchesWithFreshnessStatusDto());
+            productManager.Setup(m => m.GetAvailableProductBatchesWithFreshnessStatusAsync()).Returns(Task.FromResult(productBatchesWithFreshnessStatus));
 
             var productController = new ProductController(productManager.Object);
 
@@ -109,7 +138,7 @@ namespace InventoryManagement.Tests.Controllers
         {
             //Arrange
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetAvailableProductBatchesWithFreshnessStatusAsync()).Returns(GetNoProductBatchesWithFreshnessStatusResultDto());
+            productManager.Setup(m => m.GetAvailableProductBatchesWithFreshnessStatusAsync()).Returns(Task.FromResult((IList<ProductBatchWithFreshnessStatusDto>?)null));
 
             var productController = new ProductController(productManager.Object);
 
@@ -125,8 +154,13 @@ namespace InventoryManagement.Tests.Controllers
         public async Task GetProductBatchHistoryAsync_Returns200Ok_WithTheCorrectDto()
         {
             //Arrange
+            var testProductBatchHistoryDto = ProductBatchHistoryDtoBuilder.Create()
+                .WithOrder(1)
+                .WithCustomerDelivery(1)
+                .Build();
+
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetProductBatchHistoryAsync(It.IsAny<int>())).Returns(GetTestProductBatchWithHistoryDto());
+            productManager.Setup(m => m.GetProductBatchHistoryAsync(It.IsAny<int>())).Returns(Task.FromResult(testProductBatchHistoryDto));
 
             var productController = new ProductController(productManager.Object);
 
@@ -146,7 +180,7 @@ namespace InventoryManagement.Tests.Controllers
         {
             //Arrange
             var productManager = new Mock<IProductManager>();
-            productManager.Setup(m => m.GetProductBatchHistoryAsync(It.IsAny<int>())).Returns(GetNoProductBatchWithHistoryDto());
+            productManager.Setup(m => m.GetProductBatchHistoryAsync(It.IsAny<int>())).Returns(Task.FromResult((ProductBatchHistoryDto?)null));
 
             var productController = new ProductController(productManager.Object);
 
@@ -156,95 +190,6 @@ namespace InventoryManagement.Tests.Controllers
 
             //Assert
             Assert.NotNull(notFoundResult);
-        }
-
-        private Task<ProductBatchDto> GetTestProductBatchDto()
-        {
-            return Task.Run(() =>
-            {
-                return new ProductBatchDto()
-                {
-                    Id = 1
-                };
-            });
-        }
-
-        private Task<IList<ProductBatchDto>> GetTestProductBatchesDto()
-        {
-            return Task.Run(() =>
-            {
-                IList<ProductBatchDto> productBatches = new List<ProductBatchDto>()
-                {
-                    new ProductBatchDto() { Id = 1 }
-                };
-
-                return productBatches;
-            });
-        }
-
-        private Task<IList<ProductBatchWithFreshnessStatusDto>> GetTestProductBatchesWithFreshnessStatusDto()
-        {
-            return Task.Run(() =>
-            {
-                IList<ProductBatchWithFreshnessStatusDto> productBatchesWithFreshnessStatus = new List<ProductBatchWithFreshnessStatusDto>()
-                {
-                    new ProductBatchWithFreshnessStatusDto() 
-                    { 
-                        ProductBatch = new ProductBatchDto()
-                        {
-                            Id = 1
-                        }
-                    }
-                };
-
-                return productBatchesWithFreshnessStatus;
-            });
-        }
-
-        private Task<ProductBatchHistoryDto> GetTestProductBatchWithHistoryDto()
-        {
-            return Task.Run(() =>
-            {
-                return new ProductBatchHistoryDto
-                { 
-                    Order = new OrderDto()
-                    {
-                        Id = 1
-                    }
-                };
-            });
-        }
-
-        private Task<ProductBatchDto?> GetNoProductBatchResultDto()
-        {
-            return Task.Run(() =>
-            {
-                return (ProductBatchDto?)null;
-            });
-        }
-
-        private Task<IList<ProductBatchDto>?> GetNoProductBatchesResultDto()
-        {
-            return Task.Run(() =>
-            {
-                return (IList<ProductBatchDto>?)null;
-            });
-        }
-
-        private Task<IList<ProductBatchWithFreshnessStatusDto>?> GetNoProductBatchesWithFreshnessStatusResultDto()
-        {
-            return Task.Run(() =>
-            {
-                return (IList<ProductBatchWithFreshnessStatusDto>?)null;
-            });
-        }
-
-        private Task<ProductBatchHistoryDto?> GetNoProductBatchWithHistoryDto()
-        {
-            return Task.Run(() =>
-            {
-                return (ProductBatchHistoryDto?)null;
-            });
         }
     }
 }
